@@ -1,0 +1,24 @@
+#!/bin/bash
+cd /root/task/
+
+output=$(find -name "*.php")
+
+if [[ $output == *".php"* ]]; then
+
+    kubectl create deploy my-dep --image vimal13/apache-webserver-php
+    sleep 25
+	kubectl get pods --output json > /root/pods.json
+	parser=$(jq  -r ".items[]?.status.containerStatuses[]?.ready" /root/pods.json)
+	if [[ $parser == *"true"* ]]; then
+      	  kubectl get pods
+          trans=$(jq -r  ".items[].metadata.name" /root/pods.json)
+      	  kubectl cp /root/task/*.php $trans:/var/www/html
+      	  kubectl expose deploy my-dep --port 80 --type=NodePort
+      
+	else
+      echo "NO"
+	fi
+fi
+jq  -r  ".items[]?.status.containerStatuses[]?.ready" /root/pods.json
+jq -r  ".items[].metadata.name" /root/pods.json
+echo $trans
